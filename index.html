@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Study Game - Petualangan Belajar Interaktif</title>
+  <meta name="description" content="Website belajar interaktif berbasis game dengan sistem XP, level, streak, adaptive difficulty AI, dan boss battle.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Ambient Audio & Particles Canvas -->
+  <canvas id="confetti-canvas"></canvas>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand" onclick="game.navigateTo('home')">
+        <span class="brand-icon">🎮</span>
+        <span class="brand-text">Study<span class="brand-accent">Game</span></span>
+        <span class="badge-ai">AI-Powered</span>
+      </div>
+
+      <nav class="nav-links">
+        <button class="nav-btn active" data-screen="home" onclick="game.navigateTo('home')">
+          <span class="nav-icon">🏠</span> Beranda
+        </button>
+        <button class="nav-btn" data-screen="subjects" onclick="game.navigateTo('subjects')">
+          <span class="nav-icon">📚</span> Pilih Materi
+        </button>
+        <button class="nav-btn" data-screen="progress" onclick="game.navigateTo('progress')">
+          <span class="nav-icon">📊</span> Progres
+        </button>
+      </nav>
+
+      <!-- User Top Bar Status -->
+      <div class="user-status-bar">
+        <!-- Streak Indicator -->
+        <div class="status-pill streak-pill" title="Streak Jawaban Benar">
+          <span class="streak-flame" id="nav-streak-icon">🔥</span>
+          <span class="pill-value" id="nav-streak-val">0</span>
+          <span class="pill-label">Streak</span>
+        </div>
+
+        <!-- Level & XP Status -->
+        <div class="status-pill xp-pill" onclick="game.navigateTo('progress')" title="Level & Total XP">
+          <span class="level-badge" id="nav-level-badge">Lv. 1</span>
+          <div class="xp-mini-track">
+            <div class="xp-mini-bar" id="nav-xp-bar" style="width: 0%;"></div>
+          </div>
+          <span class="xp-text" id="nav-xp-val">0 XP</span>
+        </div>
+
+        <!-- Audio Toggle & Profile Button -->
+        <button class="icon-btn" id="audio-toggle-btn" onclick="soundFx.toggle()" title="Toggle Suara">
+          <span id="audio-icon">🔊</span>
+        </button>
+        <button class="avatar-btn" onclick="game.openProfileModal()" title="Profil Pengguna">
+          <span id="nav-user-avatar">🧙‍♂️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <main class="app-main">
+    
+    <!-- ==================== SCREEN 1: HOME ==================== -->
+    <section id="screen-home" class="screen-view active">
+      <div class="hero-banner">
+        <div class="hero-content">
+          <div class="badge-hero">⚡ Belajar Adaptif Generasi Baru</div>
+          <h1 class="hero-title">Taklukkan Materi,<br><span class="gradient-text">Jadilah Master Belajar!</span></h1>
+          <p class="hero-subtitle">Bukan sekadar kuis biasa. Sistem AI menganalisis kelemahanmu, mengatur kesulitan soal secara cerdas, dan membuka pertarungan Boss saat kamu siap.</p>
+          <div class="hero-actions">
+            <button class="btn btn-primary btn-lg pulse-btn" onclick="game.startQuickLearning()">
+              <span class="btn-icon">🚀</span> Mulai Belajar Sekarang
+            </button>
+            <button class="btn btn-secondary btn-lg" onclick="game.navigateTo('subjects')">
+              <span class="btn-icon">📖</span> Pilih Mata Pelajaran
+            </button>
+          </div>
+        </div>
+
+        <!-- Hero Card Character / Level Widget -->
+        <div class="hero-card">
+          <div class="profile-card-header">
+            <div class="avatar-large" id="home-avatar">🧙‍♂️</div>
+            <div class="profile-details">
+              <div class="profile-name-row">
+                <h3 id="home-username">Pelajar Tangguh</h3>
+                <button class="edit-profile-btn" onclick="game.openProfileModal()" title="Ubah Nama">✏️</button>
+              </div>
+              <span class="user-rank" id="home-rank">Novice Apprentice</span>
+            </div>
+          </div>
+
+          <div class="level-progress-box">
+            <div class="progress-info-row">
+              <span class="level-text-label">Level <strong id="home-level">1</strong></span>
+              <span class="xp-ratio-text"><span id="home-current-xp">0</span> / <span id="home-next-xp">100</span> XP</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill xp-fill" id="home-xp-progress" style="width: 0%;"></div>
+            </div>
+            <p class="xp-subtext">Dapatkan <span id="home-xp-needed">100</span> XP lagi untuk naik level!</p>
+          </div>
+
+          <div class="mini-stats-grid">
+            <div class="mini-stat-card">
+              <span class="mini-stat-icon">🔥</span>
+              <span class="mini-stat-val" id="home-streak-val">0</span>
+              <span class="mini-stat-label">Current Streak</span>
+            </div>
+            <div class="mini-stat-card">
+              <span class="mini-stat-icon">🏆</span>
+              <span class="mini-stat-val" id="home-best-streak">0</span>
+              <span class="mini-stat-label">Best Streak</span>
+            </div>
+            <div class="mini-stat-card">
+              <span class="mini-stat-icon">🎯</span>
+              <span class="mini-stat-val" id="home-accuracy">0%</span>
+              <span class="mini-stat-label">Akurasi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Advisor & Smart Recommendation Section -->
+      <div class="home-grid-section">
+        <div class="advisor-card">
+          <div class="advisor-header">
+            <div class="ai-spark-icon">✨</div>
+            <div>
+              <h3>AI Learning Advisor</h3>
+              <p class="card-caption">Diagnosis kelemahan belajar & strategi hari ini</p>
+            </div>
+          </div>
+          <div class="advisor-body" id="home-ai-recommendation">
+            <!-- Dynamic AI recommendations loaded via JS -->
+            <p>Memuat rekomendasi belajar yang disesuaikan...</p>
+          </div>
+        </div>
+
+        <!-- Daily Quest / Misi Harian -->
+        <div class="quests-card">
+          <div class="quests-header">
+            <h3>🎯 Misi Harian Belajar</h3>
+            <span class="quest-tag">Hadiah Ekstra</span>
+          </div>
+          <div class="quest-list">
+            <div class="quest-item" id="quest-1">
+              <div class="quest-icon">⚡</div>
+              <div class="quest-info">
+                <h4>Kumpulkan 50 XP Hari Ini</h4>
+                <div class="progress-bar-container small">
+                  <div class="progress-bar-fill" id="quest-1-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+              <span class="quest-status" id="quest-1-status">0/50</span>
+            </div>
+
+            <div class="quest-item" id="quest-2">
+              <div class="quest-icon">🔥</div>
+              <div class="quest-info">
+                <h4>Capai 5 Streak Jawaban Benar</h4>
+                <div class="progress-bar-container small">
+                  <div class="progress-bar-fill" id="quest-2-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+              <span class="quest-status" id="quest-2-status">0/5</span>
+            </div>
+
+            <div class="quest-item" id="quest-3">
+              <div class="quest-icon">⚔️</div>
+              <div class="quest-info">
+                <h4>Buka & Kalahkan 1 Boss Question</h4>
+                <div class="progress-bar-container small">
+                  <div class="progress-bar-fill" id="quest-3-bar" style="width: 0%;"></div>
+                </div>
+              </div>
+              <span class="quest-status" id="quest-3-status">0/1</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SCREEN 2: SUBJECT & TOPIC SELECTION ==================== -->
+    <section id="screen-subjects" class="screen-view">
+      <div class="screen-header">
+        <div>
+          <h2 class="section-title">Pilih Arena Belajar</h2>
+          <p class="section-desc">Pilih mata pelajaran dan topik untuk memulai sesi kuis adaptif. Capai <strong>Mastery &ge; 80%</strong> untuk menantang Boss Question!</p>
+        </div>
+        <div class="subject-filter-tabs" id="subject-filter-container">
+          <button class="filter-tab active" data-subject="all" onclick="game.filterSubjects('all')">Semua Materi</button>
+          <button class="filter-tab" data-subject="math" onclick="game.filterSubjects('math')">📐 Matematika</button>
+          <button class="filter-tab" data-subject="science" onclick="game.filterSubjects('science')">🔬 Sains</button>
+          <button class="filter-tab" data-subject="english" onclick="game.filterSubjects('english')">🇬🇧 B. Inggris</button>
+          <button class="filter-tab" data-subject="informatics" onclick="game.filterSubjects('informatics')">💻 Informatika</button>
+        </div>
+      </div>
+
+      <!-- Topics Grid -->
+      <div class="topics-grid" id="topics-cards-container">
+        <!-- Rendered dynamically by script.js -->
+      </div>
+    </section>
+
+    <!-- ==================== SCREEN 3: QUIZ & BATTLE ARENA ==================== -->
+    <section id="screen-quiz" class="screen-view">
+      <!-- Quiz Top Bar -->
+      <div class="quiz-top-bar">
+        <button class="btn btn-outline btn-sm" onclick="game.confirmExitQuiz()">
+          ← Keluar Sesi
+        </button>
+
+        <div class="quiz-meta-info">
+          <span class="meta-subject-badge" id="quiz-subject-label">Matematika</span>
+          <span class="meta-separator">•</span>
+          <span class="meta-topic-badge" id="quiz-topic-label">Aljabar Dasar</span>
+          <span class="meta-difficulty-badge" id="quiz-difficulty-badge">Medium</span>
+        </div>
+
+        <div class="quiz-status-indicators">
+          <div class="timer-widget" id="quiz-timer-widget">
+            <span class="timer-icon">⏱️</span>
+            <span id="quiz-timer-text">30s</span>
+          </div>
+          <div class="quiz-streak-badge" id="quiz-streak-badge">
+            <span>🔥</span> <span id="quiz-streak-val">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Boss Battle Arena Header (Shows only when mode is Boss or Challenge) -->
+      <div class="boss-arena-banner" id="boss-arena-banner" style="display: none;">
+        <div class="boss-avatar-box">
+          <span class="boss-avatar" id="boss-avatar-icon">👹</span>
+        </div>
+        <div class="boss-info-box">
+          <div class="boss-title-row">
+            <h3 class="boss-name" id="boss-name-text">Algebraic Archdemon</h3>
+            <span class="boss-badge">BOSS QUESTION • 100 XP</span>
+          </div>
+          <div class="boss-hp-track">
+            <div class="boss-hp-bar" id="boss-hp-bar" style="width: 100%;"></div>
+          </div>
+          <div class="boss-hp-text">HP: <span id="boss-hp-val">100 / 100</span></div>
+        </div>
+      </div>
+
+      <!-- Question Progress Bar -->
+      <div class="quiz-progress-track">
+        <div class="quiz-progress-fill" id="quiz-progress-fill" style="width: 20%;"></div>
+      </div>
+      <div class="quiz-step-label">
+        <span id="quiz-question-number">Soal 1 dari 5</span>
+        <span class="xp-reward-preview" id="quiz-xp-potential">+20 XP</span>
+      </div>
+
+      <!-- Quiz Main Card -->
+      <div class="quiz-card" id="quiz-card">
+        <div class="question-header">
+          <span class="concept-tag" id="quiz-concept-tag">Konsep: Persamaan Linier</span>
+          <span class="adaptive-flag" id="quiz-adaptive-tag">🎯 Soal Disesuaikan AI</span>
+        </div>
+
+        <div class="question-body">
+          <h2 class="question-text" id="quiz-question-text">
+            Jika 3x + 7 = 22, berapakah nilai dari x?
+          </h2>
+          <div class="question-code-box" id="quiz-code-box" style="display: none;">
+            <pre><code id="quiz-code-content"></code></pre>
+          </div>
+        </div>
+
+        <!-- Multiple Choice Options -->
+        <div class="options-container" id="quiz-options-container">
+          <!-- Dynamically populated options A, B, C, D -->
+        </div>
+
+        <!-- Quiz Footer Actions -->
+        <div class="quiz-footer">
+          <div class="quiz-hints-left">
+            <button class="btn btn-ghost btn-sm" id="btn-hint" onclick="game.toggleHint()">
+              💡 Petunjuk AI
+            </button>
+            <div class="hint-popup" id="hint-popup" style="display: none;">
+              <span id="hint-text">Gunakan invers operasi: kurangi kedua sisi dengan 7 terlebih dahulu.</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg" id="btn-submit-answer" onclick="game.submitAnswer()" disabled>
+            Jawab Soal →
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== SCREEN 4: PROGRESS & ANALYTICS ==================== -->
+    <section id="screen-progress" class="screen-view">
+      <div class="screen-header">
+        <div>
+          <h2 class="section-title">Laporan Progres & Analisis AI</h2>
+          <p class="section-desc">Pantau perkembangan level, penguasaan materi, dan rekomendasi perbaikan berbasis data.</p>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="game.resetAllDataConfirmation()">
+          ⚠️ Reset Progres
+        </button>
+      </div>
+
+      <!-- Overview Stats Grid -->
+      <div class="analytics-stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon-wrap bg-blue">✨</div>
+          <div class="stat-meta">
+            <span class="stat-number" id="stats-total-xp">0</span>
+            <span class="stat-title">Total XP Diperoleh</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap bg-purple">👑</div>
+          <div class="stat-meta">
+            <span class="stat-number" id="stats-level">Level 1</span>
+            <span class="stat-title">Tingkat Karakter</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap bg-orange">🔥</div>
+          <div class="stat-meta">
+            <span class="stat-number" id="stats-best-streak">0</span>
+            <span class="stat-title">Streak Terbaik</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon-wrap bg-green">🎯</div>
+          <div class="stat-meta">
+            <span class="stat-number" id="stats-accuracy">0%</span>
+            <span class="stat-title">Rasio Akurasi</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Weakness Analysis & Diagnosis Box -->
+      <div class="weakness-diagnosis-card">
+        <div class="diagnosis-header">
+          <div class="ai-spark-icon">🧠</div>
+          <div>
+            <h3>Diagnosis Cerdas & Analisis Kelemahan</h3>
+            <p class="card-caption">Evaluasi AI terhadap topik yang membutuhkan perhatian khusus</p>
+          </div>
+        </div>
+        <div class="diagnosis-body" id="progress-ai-diagnosis">
+          <!-- Filled by script.js -->
+        </div>
+      </div>
+
+      <!-- Topic Mastery Table / Cards -->
+      <div class="mastery-section-card">
+        <div class="mastery-section-header">
+          <h3>📊 Tingkat Mastery Semua Topik</h3>
+          <span class="mastery-legend"><span class="dot-boss"></span> &ge; 80% Membuka Boss Question</span>
+        </div>
+        <div class="mastery-items-list" id="progress-mastery-list">
+          <!-- Populated by script.js -->
+        </div>
+      </div>
+
+      <!-- Quiz Performance History -->
+      <div class="history-section-card">
+        <div class="history-header">
+          <h3>📜 Riwayat Pengerjaan Soal</h3>
+          <span class="history-count" id="history-total-count">0 Soal Tercatat</span>
+        </div>
+        <div class="history-table-container">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>Waktu</th>
+                <th>Materi & Topik</th>
+                <th>Kesulitan</th>
+                <th>Hasil</th>
+                <th>XP</th>
+              </tr>
+            </thead>
+            <tbody id="history-table-body">
+              <!-- Populated by script.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== MODAL 1: RESULT / FEEDBACK MODAL ==================== -->
+  <div class="modal-overlay" id="result-modal">
+    <div class="modal-card result-modal-card">
+      <div class="result-banner" id="result-banner">
+        <div class="result-icon-large" id="result-icon">🎉</div>
+        <h2 class="result-heading" id="result-heading">Luar Biasa! Benar!</h2>
+        <p class="result-subheading" id="result-subheading">Jawabanmu tepat sasaran!</p>
+      </div>
+
+      <div class="result-rewards-grid">
+        <div class="reward-pill" id="reward-xp-pill">
+          <span class="reward-icon">⚡</span>
+          <div>
+            <span class="reward-val" id="result-xp-val">+20 XP</span>
+            <span class="reward-lbl">XP Diperoleh</span>
+          </div>
+        </div>
+
+        <div class="reward-pill" id="reward-streak-pill">
+          <span class="reward-icon">🔥</span>
+          <div>
+            <span class="reward-val" id="result-streak-val">3 Streak</span>
+            <span class="reward-lbl">Streak Aktif</span>
+          </div>
+        </div>
+
+        <div class="reward-pill" id="reward-mastery-pill">
+          <span class="reward-icon">📈</span>
+          <div>
+            <span class="reward-val" id="result-mastery-val">+8%</span>
+            <span class="reward-lbl">Mastery Topik</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Explanation / Pembahasan -->
+      <div class="explanation-box">
+        <div class="explanation-header">
+          <span class="explanation-tag">💡 Pembahasan & Analisis AI</span>
+          <span class="adaptive-next-tier" id="result-next-tier-badge">Kesulitan berikutnya: Medium</span>
+        </div>
+        <div class="explanation-content" id="result-explanation-text">
+          Langkah 1: Kurangkan kedua ruas dengan 7...
+        </div>
+        <div class="concept-takeaway" id="result-concept-takeaway">
+          <strong>Kunci Konsep:</strong> Pada persamaan linier, lakukan operasi invers secara seimbang di kedua ruas.
+        </div>
+      </div>
+
+      <!-- Result Modal Actions -->
+      <div class="modal-actions-row">
+        <button class="btn btn-secondary" onclick="game.closeResultModal(false)">
+          Daftar Materi
+        </button>
+        <button class="btn btn-primary btn-lg" id="btn-next-question" onclick="game.closeResultModal(true)">
+          Soal Berikutnya →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: BOSS DEFEATED CELEBRATION ==================== -->
+  <div class="modal-overlay" id="boss-victory-modal">
+    <div class="modal-card boss-victory-card">
+      <div class="victory-trophy">🏆</div>
+      <h2 class="victory-title">BOSS BERHASIL DIKALAHKAN!</h2>
+      <p class="victory-subtitle">Kamu telah membuktikan penguasaan penuh atas topik ini!</p>
+      
+      <div class="boss-grand-reward">
+        <div class="grand-reward-item">
+          <span class="grand-icon">⚡</span>
+          <span class="grand-val">+100 XP</span>
+          <span class="grand-lbl">Mega Reward</span>
+        </div>
+        <div class="grand-reward-item">
+          <span class="grand-icon">👑</span>
+          <span class="grand-val">Mastery 100%</span>
+          <span class="grand-lbl">Topik Dikuasai Penuh</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-lg" onclick="game.closeBossVictoryModal()">
+        Ambil Hadiah & Lanjutkan! 🚀
+      </button>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: USER PROFILE & SETTINGS ==================== -->
+  <div class="modal-overlay" id="profile-modal">
+    <div class="modal-card profile-modal-card">
+      <div class="modal-header">
+        <h3>Profil Karakter & Pengaturan</h3>
+        <button class="close-modal-btn" onclick="game.closeProfileModal()">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Pilih Avatar Karakter:</label>
+          <div class="avatar-selection-row" id="avatar-picker-row">
+            <button class="avatar-opt" onclick="game.selectAvatar('🧙‍♂️')">🧙‍♂️</button>
+            <button class="avatar-opt" onclick="game.selectAvatar('🧝‍♀️')">🧝‍♀️</button>
+            <button class="avatar-opt" onclick="game.selectAvatar('👨‍🚀')">👨‍🚀</button>
+            <button class="avatar-opt" onclick="game.selectAvatar('👩‍🔬')">👩‍🔬</button>
+            <button class="avatar-opt" onclick="game.selectAvatar('🤖')">🤖</button>
+            <button class="avatar-opt" onclick="game.selectAvatar('🦊')">🦊</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="input-username">Nama Pengguna:</label>
+          <input type="text" id="input-username" class="form-control" maxlength="25" placeholder="Masukkan nama...">
+        </div>
+
+        <div class="form-group">
+          <label>Pengaturan Suara Efek Game:</label>
+          <div class="toggle-row">
+            <span>Efek Suara Web Audio (Chime & Fanfare)</span>
+            <input type="checkbox" id="setting-sound-toggle" checked onchange="soundFx.setSoundEnabled(this.checked)">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Arsitektur AI & Keamanan API:</label>
+          <div class="ai-architecture-note">
+            <p><strong>💡 Catatan Keamanan AI:</strong> Study Game menggunakan <em>Adaptive AI Engine</em> offline terpadu untuk keandalan maksimal tanpa latensi. Untuk menghubungkan ke API eksternal (Gemini / OpenAI), sistem mewajibkan arsitektur backend/serverless proxy agar API key tidak terekspos di browser client.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="game.closeProfileModal()">Batal</button>
+        <button class="btn btn-primary" onclick="game.saveProfile()">Simpan Perubahan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Script Application -->
+  <script src="script.js"></script>
+</body>
+</html>
